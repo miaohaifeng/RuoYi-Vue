@@ -12,45 +12,37 @@ import com.ruoyi.websocket.utils.GateIoMessageConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.client.WebSocketClient;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
+import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
-@Service
-public class GateIoWebSocketHandler implements WebSocketHandler, org.springframework.web.socket.WebSocketHandler {
+public class GateIoWebSocketHandler extends TextWebSocketHandler implements WebSocketHandler {
+
     private final WebSocketTypeEnum type;
     private final String wsUrl;
-    private final String lang = "en";
     private WebSocketSession session;
+    private final CexAnnMapper cexAnnMapper;
+    private final WebSocketClient webSocketClient;
 
-    @Autowired
-    private CexAnnMapper cexAnnMapper;
-
-    public GateIoWebSocketHandler(WebSocketTypeEnum type) {
-        this.type = type;
-        this.wsUrl = GateIoConfig.getWsUrlByType(type);
-    }
-
-    public GateIoWebSocketHandler() {
+    public GateIoWebSocketHandler(CexAnnMapper cexAnnMapper, WebSocketClient webSocketClient) {
+        this.cexAnnMapper = cexAnnMapper;
+        this.webSocketClient = webSocketClient;
         this.type = WebSocketTypeEnum.ANNOUNCEMENT;
         this.wsUrl = GateIoConfig.getWsUrlByType(type);
     }
 
-    // 删除 String 类型参数的构造函数
-    
     @Override
     public void connect() {
         try {
-            WebSocketClient client = new StandardWebSocketClient();
-            session = client.doHandshake(this, wsUrl).get();
+            session = webSocketClient.doHandshake(this, wsUrl).get();
             log.info("Connected to Gate.io WebSocket server: {}", wsUrl);
         } catch (Exception e) {
             log.error("Failed to connect to Gate.io WebSocket server: {}", wsUrl, e);
@@ -59,7 +51,6 @@ public class GateIoWebSocketHandler implements WebSocketHandler, org.springframe
 
     @Override
     public void subscribe(String channel) {
-        // 默认订阅中英文
         subscribe(channel, null);
     }
 
@@ -71,18 +62,16 @@ public class GateIoWebSocketHandler implements WebSocketHandler, org.springframe
                 subscribeMessage.put("time", System.currentTimeMillis() / 1000);
                 subscribeMessage.put("channel", channel);
                 subscribeMessage.put("event", "subscribe");
-                
-                // 如果指定了语言，则只订阅指定语言
+
                 if (language != null) {
                     subscribeMessage.put("payload", new String[]{language.getCode()});
                 } else {
-                    // 默认订阅中英文
                     subscribeMessage.put("payload", new String[]{LanguageEnum.EN.getCode(), LanguageEnum.ZH.getCode()});
                 }
 
                 session.sendMessage(new TextMessage(JSON.toJSONString(subscribeMessage)));
-                log.info("Subscribed to channel: {} with language: {}", channel, 
-                    language != null ? language.getCode() : "en,zh");
+                log.info("Subscribed to channel: {} with language: {}", channel,
+                        language != null ? language.getCode() : "en,zh");
             } catch (Exception e) {
                 log.error("Failed to subscribe to channel: {}", channel, e);
             }
@@ -106,7 +95,6 @@ public class GateIoWebSocketHandler implements WebSocketHandler, org.springframe
         return ExchangeEnum.GATE_IO;
     }
 
-    // Spring WebSocketHandler 接口必需的方法
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
         log.info("Connection established with Gate.io");
@@ -114,10 +102,18 @@ public class GateIoWebSocketHandler implements WebSocketHandler, org.springframe
 
     @Override
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) {
+        if (cexAnnMapper == null) {
+            throw new IllegalStateException("CexAnnMapper 未正确注入");
+        }
+
         log.info("Received message from Gate.io: {}", message.getPayload());
         CexAnn cexAnn = GateIoMessageConverter.convertAnnouncementMessage((String) message.getPayload());
         if (cexAnn != null) {
-            CexAnn old =   cexAnnMapper.selectCexAnnByExchangeIdAndChannelAndTimeMs(ExchangeEnum.GATE_IO.getName(),cexAnn.getChannel(),cexAnn.getTimeMs());
+            CexAnn old = cexAnnMapper.selectCexAnnByExchangeIdAndChannelAndTimeMs(
+                    ExchangeEnum.GATE_IO.getName(),
+                    cexAnn.getChannel(),
+                    cexAnn.getTimeMs()
+            );
             if (old == null) {
                 cexAnnMapper.insertCexAnn(cexAnn);
             }

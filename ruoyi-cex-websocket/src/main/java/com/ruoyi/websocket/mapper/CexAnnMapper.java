@@ -2,6 +2,7 @@ package com.ruoyi.websocket.mapper;
 
 import com.ruoyi.websocket.domain.CexAnn;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -63,5 +64,6 @@ public interface CexAnnMapper {
      */
     public int deleteCexAnnByIds(Long[] ids);
 
-    CexAnn selectCexAnnByExchangeIdAndChannelAndTimeMs(String exchangeId, String channel, long timeMs);
+    CexAnn selectCexAnnByExchangeIdAndChannelAndTimeMs(@Param("exchangeId") String exchangeId, @Param("channel") String channel, @Param("timeMs") long timeMs);
+
 }
