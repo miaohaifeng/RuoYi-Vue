@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.websocket.mapper.CexAnnMapper">
+    
+    <resultMap type="CexAnn" id="CexAnnResult">
+        <result property="id"    column="id"    />
+        <result property="exchangeId"    column="exchange_id"    />
+        <result property="channel"    column="channel"    />
+        <result property="timeMs"    column="time_ms"    />
+        <result property="event"    column="event"    />
+        <result property="rawData"    column="raw_data"    />
+        <result property="lang"    column="lang"    />
+        <result property="originUrl"    column="origin_url"    />
+        <result property="title"    column="title"    />
+        <result property="brief"    column="brief"    />
+        <result property="publishedAt"    column="published_at"    />
+        <result property="createType"    column="create_type"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectCexAnnVo">
+        select id, exchange_id, channel, time_ms, event, raw_data, lang, origin_url, title, brief, published_at, create_type, update_time from cex_ann
+    </sql>
+
+    <select id="selectCexAnnList" parameterType="CexAnn" resultMap="CexAnnResult">
+        <include refid="selectCexAnnVo"/>
+        <where>  
+            <if test="exchangeId != null  and exchangeId != ''"> and exchange_id = #{exchangeId}</if>
+            <if test="channel != null  and channel != ''"> and channel = #{channel}</if>
+            <if test="timeMs != null  and timeMs != ''"> and time_ms = #{timeMs}</if>
+            <if test="event != null  and event != ''"> and event = #{event}</if>
+            <if test="rawData != null  and rawData != ''"> and raw_data = #{rawData}</if>
+            <if test="lang != null  and lang != ''"> and lang = #{lang}</if>
+            <if test="originUrl != null  and originUrl != ''"> and origin_url = #{originUrl}</if>
+            <if test="title != null  and title != ''"> and title = #{title}</if>
+            <if test="brief != null  and brief != ''"> and brief = #{brief}</if>
+            <if test="publishedAt != null  and publishedAt != ''"> and published_at = #{publishedAt}</if>
+            <if test="createType != null "> and create_type = #{createType}</if>
+        </where>
+    </select>
+    
+    <select id="selectCexAnnById" parameterType="Long" resultMap="CexAnnResult">
+        <include refid="selectCexAnnVo"/>
+        where id = #{id}
+    </select>
+    <select id="selectCexAnnByExchangeIdAndChannelAndTimeMs" resultType="com.ruoyi.websocket.domain.CexAnn">
+        <include refid="selectCexAnnVo"/>
+        where exchange_id = #{exchangeId} and channel = #{channel} and time_ms = #{timeMs}
+    </select>
+
+    <insert id="insertCexAnn" parameterType="CexAnn" useGeneratedKeys="true" keyProperty="id">
+        insert into cex_ann
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="exchangeId != null">exchange_id,</if>
+            <if test="channel != null">channel,</if>
+            <if test="timeMs != null">time_ms,</if>
+            <if test="event != null">event,</if>
+            <if test="rawData != null">raw_data,</if>
+            <if test="lang != null">lang,</if>
+            <if test="originUrl != null">origin_url,</if>
+            <if test="title != null">title,</if>
+            <if test="brief != null">brief,</if>
+            <if test="publishedAt != null">published_at,</if>
+            <if test="createType != null">create_type,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="exchangeId != null">#{exchangeId},</if>
+            <if test="channel != null">#{channel},</if>
+            <if test="timeMs != null">#{timeMs},</if>
+            <if test="event != null">#{event},</if>
+            <if test="rawData != null">#{rawData},</if>
+            <if test="lang != null">#{lang},</if>
+            <if test="originUrl != null">#{originUrl},</if>
+            <if test="title != null">#{title},</if>
+            <if test="brief != null">#{brief},</if>
+            <if test="publishedAt != null">#{publishedAt},</if>
+            <if test="createType != null">#{createType},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateCexAnn" parameterType="CexAnn">
+        update cex_ann
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="exchangeId != null">exchange_id = #{exchangeId},</if>
+            <if test="channel != null">channel = #{channel},</if>
+            <if test="timeMs != null">time_ms = #{timeMs},</if>
+            <if test="event != null">event = #{event},</if>
+            <if test="rawData != null">raw_data = #{rawData},</if>
+            <if test="lang != null">lang = #{lang},</if>
+            <if test="originUrl != null">origin_url = #{originUrl},</if>
+            <if test="title != null">title = #{title},</if>
+            <if test="brief != null">brief = #{brief},</if>
+            <if test="publishedAt != null">published_at = #{publishedAt},</if>
+            <if test="createType != null">create_type = #{createType},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteCexAnnById" parameterType="Long">
+        delete from cex_ann where id = #{id}
+    </delete>
+
+    <delete id="deleteCexAnnByIds" parameterType="String">
+        delete from cex_ann where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>
